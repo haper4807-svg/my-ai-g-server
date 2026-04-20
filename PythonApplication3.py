@@ -15,24 +15,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Используй свой токен напрямую, чтобы точно работало
+# Твой токен
 CREDENTIALS = "MDE5ZGE5ZTgtMGE4MC03ZWMxLWJkYTEtYjFjZTlkNWZlMTIxOjg4ZmUxMmEwLWFlMGUtNGI0Yy04ODFlLWNmMWQzYTBkMjQ0MA=="
+
+# Глобальный список для хранения истории (Память)
+# Мы добавляем системную роль, чтобы ИИ знал, кто он
+chat_history = [{"role": "system", "content": "Ты полезный ИИ-ассистент под именем AI G."}]
 
 @app.get("/ask_ai")
 async def ask_ai(question: str):
+    global chat_history
     try:
+        # 1. Запоминаем вопрос пользователя
+        chat_history.append({"role": "user", "content": question})
+        
+        # 2. Ограничиваем память (храним только последние 10 сообщений, чтобы не зависало)
+        if len(chat_history) > 11:
+            chat_history = [chat_history[0]] + chat_history[-10:]
+
         with GigaChat(credentials=CREDENTIALS, verify_ssl_certs=False) as giga:
-            # Отправляем просто текст, так надежнее для теста
-            response = giga.chat(question)
+            # 3. Отправляем ВСЮ историю сообщений
+            response = giga.chat({"messages": chat_history})
             answer = response.choices[0].message.content
+            
+            # 4. Запоминаем ответ ИИ
+            chat_history.append({"role": "assistant", "content": answer})
+            
         return {"answer": str(answer)}
     except Exception as e:
-        # Если ошибка, мы увидим её текст вместо undefined
-        return {"answer": f"Ошибка на стороне AI: {str(e)}"}
+        return {"answer": f"Ошибка памяти AI: {str(e)}"}
 
 @app.get("/")
 async def root():
-    return {"status": "ok"}
+    return {"status": "ok", "history_len": len(chat_history)}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
