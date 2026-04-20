@@ -1,4 +1,5 @@
 ﻿# -*- coding: utf-8 -*-
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -19,7 +20,7 @@ GIGACHAT_CREDENTIALS = "MDE5ZGE5ZTgtMGE4MC03ZWMxLWJkYTEtYjFjZTlkNWZlMTIxOjg4ZmUx
 
 chat_history = [{"role": "system", "content": "Ты полезный ИИ-ассистент под именем AI G."}]
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/ask_ai")
 async def get_app():
     return """
     <!DOCTYPE html>
