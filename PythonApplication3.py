@@ -7,7 +7,6 @@ from gigachat import GigaChat
 
 app = FastAPI()
 
-# Разрешаем запросы от твоего приложения (CORS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,28 +15,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ВСТАВЬ СЮДА СВОЙ ТОКЕН ИЗ GIGACHAT STUDIO
-GIGACHAT_CREDENTIALS = "MDE5ZGE5ZTgtMGE4MC03ZWMxLWJkYTEtYjFjZTlkNWZlMTIxOjg4ZmUxMmEwLWFlMGUtNGI0Yy04ODFlLWNmMWQzYTBkMjQ0MA=="
-
-chat_history = [{"role": "system", "content": "Ты полезный ИИ-ассистент под именем AI G."}]
+# Используй свой токен напрямую, чтобы точно работало
+CREDENTIALS = "MDE5ZGE5ZTgtMGE4MC03ZWMxLWJkYTEtYjFjZTlkNWZlMTIxOjg4ZmUxMmEwLWFlMGUtNGI0Yy04ODFlLWNmMWQzYTBkMjQ0MA=="
 
 @app.get("/ask_ai")
 async def ask_ai(question: str):
-    global chat_history
     try:
-        chat_history.append({"role": "user", "content": question})
-        with GigaChat(credentials=GIGACHAT_CREDENTIALS, verify_ssl_certs=False) as giga:
-            response = giga.chat({"messages": chat_history})
-            # Правильное получение ответа
+        with GigaChat(credentials=CREDENTIALS, verify_ssl_certs=False) as giga:
+            # Отправляем просто текст, так надежнее для теста
+            response = giga.chat(question)
             answer = response.choices[0].message.content
-            chat_history.append({"role": "assistant", "content": answer})
-        return {"answer": answer}
+        return {"answer": str(answer)}
     except Exception as e:
-        return {"answer": f"Ошибка AI G: {str(e)}"}
+        # Если ошибка, мы увидим её текст вместо undefined
+        return {"answer": f"Ошибка на стороне AI: {str(e)}"}
 
 @app.get("/")
 async def root():
-    return {"message": "AI G Server is Running"}
+    return {"status": "ok"}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
